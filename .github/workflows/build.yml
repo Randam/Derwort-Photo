@@ -1,4 +1,4 @@
-name: Build and verify website
+name: Build, verify and deploy website
 on:
   push:
     branches: [main]
@@ -12,18 +12,36 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
-      - name: Build the static website
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6.0.0
+      - name: Build the static website for the custom domain
         run: python scripts/build.py
       - name: Verify all migrated routes and assets
         run: python scripts/verify.py
-      - uses: actions/upload-artifact@v7.0.2
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
-          name: derwort-photo-website
           path: dist/
-          include-hidden-files: true
-          retention-days: 14
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5.0.1
