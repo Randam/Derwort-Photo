@@ -1,0 +1,65 @@
+# Derwort Photo
+
+A photography-first, static replacement for [www.derwortphoto.com](https://www.derwortphoto.com). The approved design uses a warm paper background, quiet typography and large photographs. No WordPress installation, database, JavaScript framework or build service is required.
+
+## Build and preview
+
+Python 3.12 or newer is sufficient. There are no build dependencies to install.
+
+```sh
+python3 scripts/build.py
+python3 scripts/verify.py
+python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
+```
+
+Visit `http://127.0.0.1:4173/`. Upload **the contents of `dist/`** to a static web host. Generated files are excluded from Git; GitHub Actions builds, verifies and saves the deployment artifact after every push to `main`. This workflow does not change hosting or DNS.
+
+For a host that serves this repository under a project subdirectory:
+
+```sh
+python3 scripts/build.py --out /tmp/derwort-photo-preview --base-path /Derwort-Photo
+python3 scripts/verify.py --out /tmp/derwort-photo-preview --base-path /Derwort-Photo
+```
+
+This adjusts local links, image data, fonts and redirects for the subdirectory. Production canonical URLs intentionally refer to `https://www.derwortphoto.com`.
+
+## Migrated content
+
+- All **72 published WordPress blog posts**, with the original `/blog/<slug>/` paths and publication dates.
+- All articles rewritten in English for readability, clearer place names and more useful search descriptions. Old practical advice is presented as a dated personal visit, rather than a current recommendation.
+- **413 unique photographs**, including the five original homepage carousel images and the Windmills, Zoetermeer and Dubai portfolio collections.
+- Local WebP images in 640, 1200 and 2400-pixel variants, preserving image proportions. The long edge is capped at each size; portraits therefore have smaller width descriptors. The original full-resolution photographs are not needed by the deployed website.
+- A paginated Journal, browser-local search across all stories, category filters, category/tag archives, related articles and accessible photograph dialogs with keyboard navigation and mobile swipe support.
+- Locally hosted fonts and their OFL licences; no external font requests, cookies, tracking, contact form or WordPress runtime requests.
+- Canonical URLs, Open Graph metadata, `BlogPosting` structured data, `sitemap.xml`, `robots.txt`, RSS at `/feed.xml` and a custom 404 page.
+- The Contact page is removed. Instagram and 500px remain available in the About section.
+
+The migration inventory and source text are retained in `content/migration/`. This is a content migration, not a WordPress database backup. Plugin settings, users, comments, spam, and unused theme demonstration content are deliberately not part of the new website.
+
+## Editing
+
+- `content/editorial.json`: reviewed titles and article paragraphs, keyed by the original slug.
+- `content/migration/source-posts.json`: original dates, image references, taxonomy terms and source text.
+- `content/migration/media.json`: local asset variants, dimensions and original source URLs.
+- `content/migration/portfolio.json`: original portfolio selections.
+- `templates/home.html`: approved homepage layout.
+- `public/style.css` and `public/script.js`: shared design and interactions.
+- `scripts/build.py`: static page generation, shared navigation, article galleries and SEO output.
+
+After editing, rebuild and run the verifier. Every article and its photographs remain accessible without JavaScript; JavaScript adds the photo viewer, carousel controls, filtering and search. Pagination provides a complete alternative to search.
+
+The optional one-time importer, `scripts/migrate_media.py`, requires Pillow. It can reconstruct missing web image variants from the inventoried original URLs; it is not invoked during ordinary builds. Pass `--backup-directory /path/to/originals` to retain downloaded originals outside this repository.
+
+## Hosting and URL continuity
+
+The new site is ready to deploy, but publishing this repository does not replace the WordPress website or alter `derwortphoto.com` DNS.
+
+The existing 72 article URLs, three portfolio item URLs, category/tag archive paths and `/portfolio/` are real generated pages. `/home/`, `/about-me/`, the former author archive and homepage pagination have fallback HTML redirects and host redirect rules. The Contact URL returns 404.
+
+`dist/_redirects` contains HTTP 301 rules for hosts that support this format, including the old `/files/...` media links and WordPress RSS paths. `dist/.htaccess` provides Apache redirect rules. Preserve these dotfiles when deploying. Plain static servers use the fallback HTML redirects for moved pages; GitHub Pages does not interpret `_redirects`, `_headers` or `.htaccess`. On hosts without HTTP redirects, existing shared media URLs and old feed URLs require host-level routing if they must remain compatible.
+
+Before switching the domain, deploy `dist/` at the new host, enable HTTPS and check representative old article and image URLs. Keep the independent WordPress backup until the new deployment has been verified. No `CNAME` file is included, so pushing to GitHub cannot claim or switch the current domain.
+
+## Copyright
+
+All photographs and authored content © Jeroen Derwort. All rights reserved. Font licences are included in `public/assets/fonts/`. The presence of photographs in this repository does not grant a reuse licence.
