@@ -12,7 +12,7 @@ python3 scripts/verify.py
 python3 -m http.server 4173 --bind 127.0.0.1 --directory dist
 ```
 
-Visit `http://127.0.0.1:4173/`. Upload **the contents of `dist/`** to a static web host. Generated files are excluded from Git; GitHub Actions builds, verifies and saves the deployment artifact after every push to `main`. This workflow does not change hosting or DNS.
+Visit `http://127.0.0.1:4173/`. Upload **the contents of `dist/`** to a static web host. Generated files are excluded from Git. GitHub Actions builds and verifies the website after every push, then publishes successful `main` builds to **GitHub Pages**. Pull requests are verified without deploying. The custom production domain is **https://www.derwortphoto.com**; Cloudflare manages DNS and migration redirects.
 
 For a host that serves this repository under a project subdirectory:
 
@@ -52,13 +52,15 @@ The optional one-time importer, `scripts/migrate_media.py`, requires Pillow. It 
 
 ## Hosting and URL continuity
 
-The new site is ready to deploy, but publishing this repository does not replace the WordPress website or alter `derwortphoto.com` DNS.
+Production uses GitHub Pages with `www.derwortphoto.com` configured in the repository Pages settings. Both `www.derwortphoto.com` and the apex `derwortphoto.com` point to `randam.github.io` through Cloudflare. The apex redirects to the canonical `www` hostname. A successful push to `main` automatically updates the live site.
 
 The existing 72 article URLs, three portfolio item URLs, category/tag archive paths and `/portfolio/` are real generated pages. `/home/`, `/about-me/`, the former author archive and homepage pagination have fallback HTML redirects and host redirect rules. The Contact URL returns 404.
 
 `dist/_redirects` contains HTTP 301 rules for hosts that support this format, including the old `/files/...` media links and WordPress RSS paths. `dist/.htaccess` provides Apache redirect rules. Preserve these dotfiles when deploying. Plain static servers use the fallback HTML redirects for moved pages; GitHub Pages does not interpret `_redirects`, `_headers` or `.htaccess`. On hosts without HTTP redirects, existing shared media URLs and old feed URLs require host-level routing if they must remain compatible.
 
-Before switching the domain, deploy `dist/` at the new host, enable HTTPS and check representative old article and image URLs. Keep the independent WordPress backup until the new deployment has been verified. No `CNAME` file is included, so pushing to GitHub cannot claim or switch the current domain.
+Cloudflare Bulk Redirects provides the HTTP 301 responses that GitHub Pages does not implement. The account list is `derwort_photo_legacy_redirects`; its entries cover both production hostnames. Generate its API import file after a build with `python3 scripts/export_cloudflare_redirects.py` (`dist/cloudflare-redirects.json`). It includes the legacy image sizes found in the original articles, moved pages and feeds. Update this list if migration mappings change. Redirects require the Cloudflare proxy to remain enabled.
+
+`public/CNAME` records the custom domain in the source. GitHub Actions deployments also require the custom domain to be configured in repository Settings → Pages. TLS is terminated at Cloudflare with a verified HTTPS connection to GitHub Pages. The independent WordPress and pre-migration DNS backups remain outside this repository.
 
 ## Copyright
 
