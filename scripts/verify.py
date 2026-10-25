@@ -8,9 +8,10 @@ from urllib.parse import urlsplit, unquote
 from xml.etree import ElementTree
 ROOT=Path(__file__).resolve().parents[1]
 class Page(HTMLParser):
-    def __init__(self):super().__init__();self.refs=[];self.h1=0;self.canonical=[];self.noindex=False;self.json=[];self.script=False;self.buffer='';self.text=[]
+    def __init__(self):super().__init__();self.refs=[];self.h1=0;self.canonical=[];self.noindex=False;self.json=[];self.script=False;self.buffer='';self.text=[];self.meta={}
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
+        if tag=='meta':self.meta[a.get('property') or a.get('name')]=a.get('content','')
         if tag=='h1':self.h1+=1
         if tag in ['a','link'] and a.get('href'):self.refs.append(a['href'])
         if tag in ['img','script'] and a.get('src'):self.refs.append(a['src'])
@@ -44,6 +45,12 @@ def main():
             if page.h1!=1:errors.append(f'{file.relative_to(out)}: expected one h1, got {page.h1}')
             if len(page.canonical)!=1:errors.append(f'{file.relative_to(out)}: missing/duplicate canonical URL')
             indexable.append(page.canonical[0])
+            required=['og:title','og:description','og:url','og:image','og:image:secure_url','og:image:type','og:image:width','og:image:height','og:image:alt','twitter:card','twitter:title','twitter:description','twitter:image','twitter:image:alt']
+            if any(not page.meta.get(key) for key in required):errors.append(f'{file.relative_to(out)}: incomplete sharing metadata')
+            image=page.meta.get('og:image','');url=urlsplit(image)
+            if url.scheme!='https' or url.netloc!='www.derwortphoto.com' or not url.path.startswith('/assets/social/') or not url.path.endswith('.jpg') or not (out/url.path.lstrip('/')).is_file():errors.append(f'{file.relative_to(out)}: missing public sharing JPEG')
+            expected={'og:image:type':'image/jpeg','og:image:width':'1200','og:image:height':'630','og:image:secure_url':image,'twitter:image':image,'twitter:card':'summary_large_image'}
+            if any(page.meta.get(key)!=value for key,value in expected.items()):errors.append(f'{file.relative_to(out)}: inconsistent sharing image metadata')
         for ref in page.refs:
             if not exists(ref):errors.append(f'{file.relative_to(out)}: missing {ref}')
         # Both embedded gallery data and all search-card destinations must be valid.

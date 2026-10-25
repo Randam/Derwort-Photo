@@ -21,6 +21,7 @@ def excerpt(p):
     return text[:162].rsplit(' ',1)[0]+ '…'
 def json_script(value):return json.dumps(value,ensure_ascii=False).replace('<','\\u003c')
 def post_path(p):return '/blog/'+p['slug']+'/'
+def social_path(source):return '/assets/social/'+source.rsplit('/',1)[-1].removesuffix('-2400.webp')+'.jpg'
 class Builder:
     def __init__(self,out,base):
         self.out=out;self.base=base.rstrip('/');self.urls={};self.redirects={}
@@ -66,7 +67,11 @@ class Builder:
         srcset=', '.join(f'{m[k]} {n}w' for k,n in zip(['thumb','medium','src'],ws))
         return f'<img src="{m[size]}" srcset="{srcset}" sizes="{sizes}" width="{w}" height="{h}" alt="{esc(alt or m.get("caption") or "Photograph by Jeroen Derwort")}" '+('loading="lazy"' if lazy else 'fetchpriority="high"')+' decoding="async">'
     def head(self,title,description,path,image=None,article=None):
-        canonical=ORIGIN+path;image=ORIGIN+(image or self.features[0]['src'])
+        canonical=ORIGIN+path;source=image or self.features[0]['src']
+        image=ORIGIN+social_path(source)
+        photo=next(m for m in self.media.values() if m['src']==source)
+        image_alt=photo.get('caption') or (title if source!=self.features[0]['src'] else self.features[0]['alt'])
+        image_alt+=' — photograph by Jeroen Derwort'
         data={'@context':'https://schema.org','@type':'BlogPosting' if article else 'WebPage','headline' if article else 'name':title,'description':description,'url':canonical,'inLanguage':'en','author':{'@type':'Person','name':'Jeroen Derwort','url':ORIGIN+'/#about'},'image':image}
         if article:data.update(datePublished=article['date']+'+02:00' if 4<=int(article['date'][5:7])<=10 else article['date']+'+01:00',dateModified=article['modified'][:10],mainEntityOfPage=canonical)
         # WordPress timestamps are local Amsterdam times, including historical DST.
@@ -76,7 +81,9 @@ class Builder:
             data['dateModified']='2026-10-23'
         return f'''<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)} — Derwort Photo</title><meta name="description" content="{esc(description)}"><link rel="canonical" href="{canonical}">
-<meta name="theme-color" content="#f5f3ee"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:site_name" content="Derwort Photo"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{canonical}"><meta property="og:image" content="{image}"><meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f5f3ee"><meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:site_name" content="Derwort Photo"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{canonical}">
+<meta property="og:image" content="{image}"><meta property="og:image:secure_url" content="{image}"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{esc(image_alt)}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{esc(title)}"><meta name="twitter:description" content="{esc(description)}"><meta name="twitter:image" content="{image}"><meta name="twitter:image:alt" content="{esc(image_alt)}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"><link rel="alternate" type="application/rss+xml" title="Derwort Photo Journal" href="/feed.xml"><script src="/script.js" defer></script><script type="application/ld+json">{json_script(data)}</script>'''
     def header(self):return '''<a class="skip" href="#main">Skip to content</a><header class="header"><a class="brand" href="/" aria-label="Derwort Photo home">DERWORT<span>PHOTO</span><i></i></a><nav aria-label="Main navigation"><a href="/#photographs">Photographs</a><a href="/blog/">Journal</a><a href="/#about">About</a></nav><a class="header-social" href="https://www.instagram.com/derwortphoto/" target="_blank" rel="noopener noreferrer">Instagram <span>↗</span></a></header>'''
     def footer(self):return '''<footer><a class="brand" href="/">DERWORT<span>PHOTO</span><i></i></a><p>© <span id="year">2026</span> Jeroen Derwort. All rights reserved.</p><a href="#main">Back to top ↑</a></footer>'''
@@ -149,7 +156,7 @@ class Builder:
                 photos.append(dict(m,title=title,alt=title+' — '+summaries[slug][0],detail='Photograph by Jeroen Derwort'))
             title,description=summaries[slug];path=f'/blog/portfolio-items/{slug}/'
             body=f'<main id="main" class="portfolio-page section"><a class="back-link" href="/portfolio/">← All collections</a><div class="section-heading"><div><p class="eyebrow">THE PORTFOLIO / {len(photos):02d} PHOTOGRAPHS</p><h1>{esc(title)}</h1></div><p>{esc(description)}</p></div>{self.gallery(photos)}</main>'
-            self.page(title+' photography',description,path,body,photos)
+            self.page(title+' photography',description,path,body,photos,photos[0]['src'])
         cards=''
         for slug,(title,description) in summaries.items():
             ref=self.portfolio[slug][0];m=self.media[normalized(ref['src'])]

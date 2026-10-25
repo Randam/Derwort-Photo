@@ -50,6 +50,8 @@ After editing, rebuild and run the verifier. Every article and its photographs r
 
 The optional one-time importer, `scripts/migrate_media.py`, requires Pillow. It can reconstruct missing web image variants from the inventoried original URLs; it is not invoked during ordinary builds. Pass `--backup-directory /path/to/originals` to retain downloaded originals outside this repository.
 
+Social link previews use committed 1200 × 630 JPEGs in `public/assets/social/`, with matching Open Graph and Twitter Card metadata. The homepage uses the Zaanse Schans photograph; articles and collections use their own cover photograph. The complete composition is preserved on a neutral background. After changing cover photographs, run `python3 scripts/generate_social_images.py` (requires Pillow), commit the generated JPEGs, then rebuild and verify. Ordinary builds need no image-processing dependencies.
+
 ## Hosting and URL continuity
 
 Production uses GitHub Pages with `www.derwortphoto.com` configured in the repository Pages settings. Both `www.derwortphoto.com` and the apex `derwortphoto.com` point to `randam.github.io` through Cloudflare. The apex redirects to the canonical `www` hostname. A successful push to `main` automatically updates the live site.
