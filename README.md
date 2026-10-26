@@ -30,7 +30,7 @@ This adjusts local links, image data, fonts and redirects for the subdirectory. 
 - **413 unique photographs**, including the five original homepage carousel images and the Windmills, Zoetermeer and Dubai portfolio collections.
 - Local WebP images in 640, 1200 and 2400-pixel variants, preserving image proportions. The long edge is capped at each size; portraits therefore have smaller width descriptors. The original full-resolution photographs are not needed by the deployed website.
 - A paginated Journal, browser-local search across all stories, category filters, category/tag archives, related articles and accessible photograph dialogs with keyboard navigation and mobile swipe support.
-- Locally hosted fonts and their OFL licences; no external font requests, cookies, tracking, contact form or WordPress runtime requests.
+- Locally hosted fonts and their OFL licences; no external font requests, contact form or WordPress runtime requests.
 - Canonical URLs, Open Graph metadata, `BlogPosting` structured data, `sitemap.xml`, `robots.txt`, RSS at `/feed.xml` and a custom 404 page.
 - The Contact page is removed. Instagram and 500px remain available in the About section.
 
@@ -67,3 +67,9 @@ Cloudflare Bulk Redirects provides the HTTP 301 responses that GitHub Pages does
 ## Copyright
 
 All photographs and authored content © Jeroen Derwort. All rights reserved. Font licences are included in `public/assets/fonts/`. The presence of photographs in this repository does not grant a reuse licence.
+
+## Google Analytics
+
+The production website uses GA4 property `560833505` and the Derwort Photo web stream (`G-7LYYWF922P`) in the existing Derwort Media account. `public/analytics.js` loads the Google tag only after explicit consent (basic Consent Mode). Advertising storage, ad user data, ad personalization and Google signals are disabled. The choice is stored locally for 180 days and can be changed through Cookie settings in the footer. Declining deletes Analytics cookies; withdrawing an earlier grant reloads the page to stop the loaded tag. Changes also propagate to other open tabs. Google Analytics does not load on local previews.
+
+The Google tag sends the normal page view for each page load; enhanced measurement is managed in the web stream settings. Verify collection in the property's Realtime report after allowing analytics. Regular reports can take longer to populate.

@@ -45,6 +45,8 @@ def main():
             if page.h1!=1:errors.append(f'{file.relative_to(out)}: expected one h1, got {page.h1}')
             if len(page.canonical)!=1:errors.append(f'{file.relative_to(out)}: missing/duplicate canonical URL')
             indexable.append(page.canonical[0])
+            if page.refs.count(base+'/analytics.js')!=1:errors.append(f'{file.relative_to(out)}: missing/duplicate Analytics consent script')
+            if 'data-cookie-settings' not in file.read_text():errors.append(f'{file.relative_to(out)}: missing cookie preferences control')
             required=['og:title','og:description','og:url','og:image','og:image:secure_url','og:image:type','og:image:width','og:image:height','og:image:alt','twitter:card','twitter:title','twitter:description','twitter:image','twitter:image:alt']
             if any(not page.meta.get(key) for key in required):errors.append(f'{file.relative_to(out)}: incomplete sharing metadata')
             image=page.meta.get('og:image','');url=urlsplit(image)
